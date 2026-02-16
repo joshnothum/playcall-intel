@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "playcall-intel"
+version = "0.1.0"
+description = "LLM-assisted playcall normalization and structured extraction (PoC)."
+readme = "README.md"     # Used by PyPI and tooling for project metadata
+requires-python = ">=3.11"
+
+# Runtime dependencies (keep minimal for now; expand later)
+dependencies = [
+  "python-dotenv",       # Load environment variables from .env
+]
+
+# Tell setuptools we are using the src/ layout
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+# Automatically find packages inside src/
+[tool.setuptools.packages.find]
+where = ["src"]
