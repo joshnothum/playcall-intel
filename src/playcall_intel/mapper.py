@@ -53,6 +53,7 @@ def row_to_play_first_pass(row: Dict[str, Any]) -> Play:
         distance=_to_int(row.get("ydstogo")) or 0,
         yardline_100=_to_int(row.get("yardline_100")) or 0,
         play_type=infer_play_type(row),  # TODO: define taxonomy + map (or LLM-normalize) from play_type/desc
+        play_text=row.get("desc") or "",
         yards_gained=_to_int(row.get("yards_gained")),
         result=None,  # TODO: define result categories; may come from desc/penalty fields
     )

@@ -20,5 +20,6 @@ class Play:
     distance: int
     yardline_100: int
     play_type: str   # 1–99, distance from opponent end zone (side-independent; nflverse canonical field position)
+    play_text: str  # raw description from pbp (used for LLM-assisted normalization)
     yards_gained: Optional[int] = None
     result: Optional[str] = None
