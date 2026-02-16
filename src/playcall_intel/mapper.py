@@ -52,7 +52,46 @@ def row_to_play_first_pass(row: Dict[str, Any]) -> Play:
         down=_to_int(row.get("down")) or 0,
         distance=_to_int(row.get("ydstogo")) or 0,
         yardline_100=_to_int(row.get("yardline_100")) or 0,
-        play_type="unknown",  # TODO: define taxonomy + map (or LLM-normalize) from play_type/desc
+        play_type=infer_play_type(row),  # TODO: define taxonomy + map (or LLM-normalize) from play_type/desc
         yards_gained=_to_int(row.get("yards_gained")),
         result=None,  # TODO: define result categories; may come from desc/penalty fields
     )
+def infer_play_type(row: Dict[str, Any]) -> str:
+    """
+    First-pass play type classification from nflverse structured flags
+
+    - Prefer explicit boolean fields over text parsing (fast + consistent)
+    - Keep categories small and stable; detail can come later
+    - Gives the LLM a clear target for ambiguous / text-only edge cases
+    """
+    # Administrative / non-plays
+    if _to_int(row.get("no_play")) == 1:
+        return "no_play"
+    if _to_int(row.get("penalty")) == 1:
+        return "penalty"
+
+    # QB management plays
+    if _to_int(row.get("qb_kneel")) == 1:
+        return "qb_kneel"
+    if _to_int(row.get("qb_spike")) == 1:
+        return "qb_spike"
+
+    # Special teams
+    if _to_int(row.get("kickoff_attempt")) == 1:
+        return "kickoff"
+    if _to_int(row.get("punt_attempt")) == 1:
+        return "punt"
+    if _to_int(row.get("field_goal_attempt")) == 1:
+        return "field_goal"
+    if _to_int(row.get("extra_point_attempt")) == 1:
+        return "extra_point"
+    if _to_int(row.get("two_point_attempt")) == 1:
+        return "two_point_attempt"
+
+    # Core offense
+    if _to_int(row.get("rush")) == 1:
+        return "run"
+    if _to_int(row.get("pass")) == 1:
+        return "pass"
+
+    return "other"
