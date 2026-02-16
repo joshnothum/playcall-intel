@@ -1,3 +1,4 @@
+annotated-types==0.7.0
 appnope==0.1.4
 asttokens==3.0.1
 comm==0.2.3
@@ -17,11 +18,14 @@ packaging==26.0
 parso==0.8.6
 pexpect==4.9.0
 platformdirs==4.9.2
+-e git+ssh://git@github.com/joshnothum/playcall-intel.git@0d93ff5f26deeeb24adcdcf34e2b0d0fc751edf9#egg=playcall_intel
 pluggy==1.6.0
 prompt_toolkit==3.0.52
 psutil==7.2.2
 ptyprocess==0.7.0
 pure_eval==0.2.3
+pydantic==2.12.5
+pydantic_core==2.41.5
 Pygments==2.19.2
 pytest==9.0.2
 python-dateutil==2.9.0.post0
@@ -32,5 +36,7 @@ six==1.17.0
 stack-data==0.6.3
 tornado==6.5.4
 traitlets==5.14.3
+typing-inspection==0.4.2
+typing_extensions==4.15.0
 wcwidth==0.6.0
 wheel==0.46.3
