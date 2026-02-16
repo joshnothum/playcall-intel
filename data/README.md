@@ -84,12 +84,32 @@ appear in a consistent, human-readable form.
 - Structured fields remain the deterministic baseline.
 - `play_text` is the source input for any LLM-based enrichment.
 - The model adds meaning on top of the baseline; it does not replace it.
+## Result classification (first pass)
 
-This keeps the system:
+In addition to play_type, the pipeline assigns a simple `result` label as a
+rules-first baseline. This is intentionally small and stable so downstream
+logic can rely on it.
 
-- fast and testable for common cases
-- model-assisted only where it adds value
+### v1 result categories
 
+- tackle
+- complete
+- incomplete
+- touchdown
+- interception
+- fumble
+- sack
+- out_of_bounds
+- penalty
+- no_play
+- other
+
+### Notes
+
+- This is a first-pass label derived from nflverse structured outcome flags.
+- It is not meant to capture every nuance (e.g., “pass defensed”, “lateral”, etc.).
+- The LLM step can later refine or fill gaps when the narrative contains meaning
+  the structured fields do not.
 
 ### Design notes
 
