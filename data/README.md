@@ -49,6 +49,48 @@ play-type categories. These are derived from structured nflverse fields
 
 - other
 
+## Play text as a secondary data source
+
+In addition to structured nflverse fields, the pipeline carries the raw
+play description (`desc`) as `play_text`.
+
+### Why this exists
+
+The structured columns are enough to build a stable, rules-first baseline
+(down, distance, yardline_100, play_type, yards_gained), but they do not
+capture the full meaning of the play.
+
+The original narrative is the only place where certain football semantics
+appear in a consistent, human-readable form.
+
+### What the text enables that the flags do not
+
+- The actual result of the play in plain terms
+  (tackle, incomplete, interception, touchdown, sack, etc.)
+
+- Player involvement
+  (ball carrier, passer, receiver, tackler, interceptor)
+
+- Run direction and pass context
+  (left / middle / right, scramble vs designed run)
+
+- Penalty details
+  (type, enforcement, accepted/declined, “no play” reasons)
+
+- Edge cases where structured fields are sparse or ambiguous
+
+### Design approach
+
+- Structured fields remain the deterministic baseline.
+- `play_text` is the source input for any LLM-based enrichment.
+- The model adds meaning on top of the baseline; it does not replace it.
+
+This keeps the system:
+
+- fast and testable for common cases
+- model-assisted only where it adds value
+
+
 ### Design notes
 
 - This is a first-pass, rules-based normalization layer.
