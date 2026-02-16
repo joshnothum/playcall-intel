@@ -1,12 +1,22 @@
 # virtual environment
 .venv/
+venv/
 
 # environment variables
 .env
-
+env/
 # python
 __pycache__/
 *.pyc
+*.py[cod]
+*.pyo
+*.pyd
+
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
 
 # macOS
 .DS_Store
