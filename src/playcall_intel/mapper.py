@@ -55,7 +55,7 @@ def row_to_play_first_pass(row: Dict[str, Any]) -> Play:
         play_type=infer_play_type(row),  # TODO: define taxonomy + map (or LLM-normalize) from play_type/desc
         play_text=row.get("desc") or "",
         yards_gained=_to_int(row.get("yards_gained")),
-        result=None,  # TODO: define result categories; may come from desc/penalty fields
+        result=infer_result(row),  # TODO: define result categories; may come from desc/penalty fields
     )
 def infer_play_type(row: Dict[str, Any]) -> str:
     """
@@ -94,5 +94,45 @@ def infer_play_type(row: Dict[str, Any]) -> str:
         return "run"
     if _to_int(row.get("pass")) == 1:
         return "pass"
+
+    return "other"
+
+def infer_result(row: Dict[str, Any]) -> str:
+    """
+    First-pass result classification using nflverse structured fields
+
+    - Start with explicit outcome flags (touchdown, interception, sack) before guessing from context
+    - Keep categories small and stable; detail can come later via text/LLM
+    - Provides a baseline label even when play_text parsing is deferred
+    """
+    # Administrative outcomes first
+    if _to_int(row.get("no_play")) == 1:
+        return "no_play"
+    if _to_int(row.get("penalty")) == 1:
+        return "penalty"
+
+    # Big outcomes
+    if _to_int(row.get("touchdown")) == 1:
+        return "touchdown"
+    if _to_int(row.get("interception")) == 1:
+        return "interception"
+    if _to_int(row.get("fumble_lost")) == 1:
+        return "fumble"
+    if _to_int(row.get("sack")) == 1:
+        return "sack"
+
+    # Pass outcomes (when available)
+    if _to_int(row.get("incomplete_pass")) == 1:
+        return "incomplete"
+    if _to_int(row.get("complete_pass")) == 1:
+        return "complete"
+
+    # If we have yards but no explicit result, assume the common case
+    yg = _to_int(row.get("yards_gained"))
+    if yg is not None:
+        # Optional nuance: some plays end out of bounds; nflverse often has out_of_bounds
+        if _to_int(row.get("out_of_bounds")) == 1:
+            return "out_of_bounds"
+        return "tackle"
 
     return "other"
