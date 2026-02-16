@@ -1,37 +1,53 @@
-import json
+from textwrap import dedent
 from playcall_intel.schema import Play
 
 
 def build_prompt_v1(play: Play) -> str:
-    """
-    Build a deterministic prompt that asks for LLMNormalizationV1 JSON
+    allowed_play_type = (
+        "run|pass|qb_kneel|qb_spike|kickoff|punt|field_goal|extra_point|"
+        "two_point_attempt|penalty|no_play|other"
+    )
+    allowed_result = (
+        "tackle|complete|incomplete|touchdown|interception|fumble|sack|"
+        "out_of_bounds|penalty|no_play|other"
+    )
+    allowed_direction = "left|middle|right|unknown"
 
-    - Keep the instruction tight so output stays machine-parseable
-    - Provide the structured baseline plus the raw play text
-    - The goal is consistent JSON, not creative writing
-    """
-    schema_hint = {
-        "play_type": "run|pass|qb_kneel|qb_spike|kickoff|punt|field_goal|extra_point|two_point_attempt|penalty|no_play|other",
-        "result": "tackle|complete|incomplete|touchdown|interception|fumble|sack|out_of_bounds|penalty|no_play|other",
-        "yards_gained": "integer or null",
-    }
+    prompt = f"""
+You are extracting a normalized label set from a football play description.
 
-    payload = {
-        "baseline": {
-            "play_type": play.play_type,
-            "result": play.result,
-            "yards_gained": play.yards_gained,
-            "down": play.down,
-            "distance": play.distance,
-            "yardline_100": play.yardline_100,
-        },
-        "play_text": play.play_text,
-        "required_json_shape": schema_hint,
-        "rules": [
-            "Return ONLY valid JSON (no markdown, no commentary).",
-            "Use only the allowed category values shown in required_json_shape.",
-            "If unsure, choose 'other' for play_type or result, and null for yards_gained.",
-        ],
-    }
+Return ONLY a single JSON object with EXACTLY these keys:
+play_type
+result
+yards_gained
+run_direction
 
-    return json.dumps(payload, ensure_ascii=False)
+Allowed values:
+play_type: {allowed_play_type}
+result: {allowed_result}
+run_direction: {allowed_direction}
+yards_gained: integer or null
+
+Rules:
+Use only allowed values.
+For non-run plays, set run_direction to "unknown".
+Output must be valid JSON. No markdown. No extra keys.
+
+Play context (baseline):
+play_type_baseline: {play.play_type}
+result_baseline: {play.result}
+yards_gained_baseline: {play.yards_gained}
+down: {play.down}
+distance: {play.distance}
+yardline_100: {play.yardline_100}
+
+Play text:
+{play.play_text}
+
+Example output:
+{{"play_type":"run","result":"tackle","yards_gained":3,"run_direction":"right"}}
+
+Now return the JSON object:
+"""
+
+    return dedent(prompt).strip()
