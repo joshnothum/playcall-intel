@@ -24,8 +24,7 @@ play-type categories. These are derived from structured nflverse fields
 
 ### Core offensive plays
 
-- run
-- pass
+- run- pass
 
 ### QB clock / game-management plays
 

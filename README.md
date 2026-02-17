@@ -1,6 +1,3 @@
-# AI Sports: Playcall Intelligence Engine
-
-LLM-assisted system for normalizing and structuring football play descriptions into machine-queryable data.
-
-## Status
-Project setup and packaging complete. Initial pipeline design in progress.
+git add README.md
+git commit -m "Wrap up README with the demo command and expected output artifacts"
+git push
