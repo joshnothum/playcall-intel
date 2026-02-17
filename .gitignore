@@ -21,7 +21,7 @@ dist/
 # macOS
 .DS_Store
 
-# data (we only commit small samples later)
-data/*
-!data/.gitkeep
-!data/README.md
+# Data + outputs
+data/raw/
+data/processed/
+reports/figures/
