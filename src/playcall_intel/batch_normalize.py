@@ -1,4 +1,7 @@
 import pandas as pd
+import json
+import traceback
+
 from pathlib import Path
 
 from playcall_intel.mapper import row_to_play_first_pass, is_scrimmage_play
@@ -18,28 +21,42 @@ def run_batch(sample_size: int = 25) -> None:
     client = get_llm_client()
 
     rows = []
+    rejects = []
 
     for _, row in df.iterrows():
 
-        if not is_scrimmage_play(row):
-            continue
+        try:
+            if not is_scrimmage_play(row):
+                continue
 
-        base_play = row_to_play_first_pass(row)
+            base_play = row_to_play_first_pass(row)
+            llm_out = normalize_with_llm_v1(base_play, client)
+            enriched = apply_llm_enrichment(base_play, llm_out)
 
-        llm_out = normalize_with_llm_v1(base_play, client)
-        enriched = apply_llm_enrichment(base_play, llm_out)
+            rows.append({
+                "posteam": enriched.offense_team,
+                "defteam": enriched.defense_team,
+                "down": enriched.down,
+                "distance": enriched.distance,
+                "yardline_100": enriched.yardline_100,
+                "play_type": enriched.play_type,
+                "result": enriched.result,
+                "yards_gained": enriched.yards_gained,
+                "play_text": enriched.play_text,
+            })
 
-        rows.append({
-            "posteam": enriched.offense_team,
-            "defteam": enriched.defense_team,
-            "down": enriched.down,
-            "distance": enriched.distance,
-            "yardline_100": enriched.yardline_100,
-            "play_type": enriched.play_type,
-            "result": enriched.result,
-            "yards_gained": enriched.yards_gained,
-            "play_text": enriched.play_text,
-        })
+        except Exception as e:
+            # Keep the batch moving. Capture enough context to debug later.
+            rejects.append({
+                "error_type": type(e).__name__,
+                "error": str(e),
+                "play_text": getattr(base_play, "play_text", None),
+                "baseline_play_type": getattr(base_play, "play_type", None),
+                "baseline_result": getattr(base_play, "result", None),
+                "baseline_yards_gained": getattr(base_play, "yards_gained", None),
+                "traceback": traceback.format_exc(),
+            })
+
 
     out_df = pd.DataFrame(rows)
 
@@ -47,6 +64,11 @@ def run_batch(sample_size: int = 25) -> None:
     out_df.to_csv(OUT_PATH, index=False)
 
     print(f"Wrote {len(out_df)} rows → {OUT_PATH}")
+    reject_path = OUT_PATH.parent / "rejects_sample.csv"
+    pd.DataFrame(rejects).to_csv(reject_path, index=False)
+
+    print(f"Wrote {len(rejects)} rejects → {reject_path}")
+
 
 
 if __name__ == "__main__":
