@@ -32,6 +32,7 @@ Rules:
 Use only allowed values.
 For non-run plays, set run_direction to "unknown".
 Output must be valid JSON. No markdown. No extra keys.
+Never use ‘sack’ as play_type; sacks are a result. Use play_type ‘pass’ for sacks unless the play is clearly a run.
 
 Play context (baseline):
 play_type_baseline: {play.play_type}
