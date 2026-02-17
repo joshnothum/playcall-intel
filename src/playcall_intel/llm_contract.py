@@ -32,6 +32,8 @@ ResultType = Literal[
     "other",
 ]
 
+RunDirection = Literal["left", "middle", "right", "unknown"]
+
 
 class LLMNormalizationV1(BaseModel):
     """
@@ -45,3 +47,7 @@ class LLMNormalizationV1(BaseModel):
     play_type: PlayType = Field(..., description="Normalized play type category")
     result: ResultType = Field(..., description="Normalized play result category")
     yards_gained: Optional[int] = Field(None, description="Yards gained (optional cross-check)")
+    run_direction: RunDirection = Field("unknown", description="Run direction for run-like plays (left/middle/right). Use unknown if not a run or unclear.",
+)
+
+
