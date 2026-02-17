@@ -1,16 +1,22 @@
 import os
 import pytest
+import socket
 
 from playcall_intel.client_factory import get_llm_client
 from playcall_intel.llm_normalize import normalize_with_llm_v1
 from playcall_intel.schema import Play
 
-
 pytestmark = pytest.mark.skipif(
-    os.getenv("LLM_PROVIDER") != "ollama",
-    reason="Set LLM_PROVIDER=ollama to run the local Ollama integration smoke test.",
+    os.getenv("LLM_PROVIDER") != "ollama" or not _ollama_up(),
+    reason="Ollama integration test requires LLM_PROVIDER=ollama and a running Ollama server on localhost:11434.",
 )
 
+def _ollama_up(host: str = "localhost", port: int = 11434) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=0.5):
+            return True
+    except OSError:
+        return False
 
 def test_ollama_local_llama_contract_valid_output():
     client = get_llm_client()
