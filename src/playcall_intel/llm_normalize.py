@@ -19,3 +19,27 @@ def normalize_with_llm_v1(play: Play, client: LLMClient) -> LLMNormalizationV1:
 
     data = json.loads(raw_json)
     return LLMNormalizationV1(**data)
+
+def apply_llm_enrichment(play: Play, llm_out: LLMNormalizationV1) -> Play:
+    """
+    Merge contract-validated LLM output back onto the baseline Play.
+
+    Design choice:
+    - Keep the original Play immutable in spirit
+    - Treat the LLM as a structured enrichment layer, not a source of truth
+    """
+
+    return Play(
+        offense_team=play.offense_team,
+        defense_team=play.defense_team,
+        quarter=play.quarter,
+        down=play.down,
+        distance=play.distance,
+        yardline_100=play.yardline_100,
+
+        play_type=llm_out.play_type,
+        result=llm_out.result,
+        yards_gained=llm_out.yards_gained,
+
+        play_text=play.play_text,
+    )
