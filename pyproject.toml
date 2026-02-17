@@ -12,6 +12,7 @@ requires-python = ">=3.11"
 # Runtime dependencies (keep minimal for now; expand later)
 dependencies = [
   "python-dotenv",       # Load environment variables from .env
+  "pandas",
 ]
 
 # Tell setuptools we are using the src/ layout
