@@ -12,7 +12,7 @@ data/raw/play_by_play_2025.csv.gz
 
 ## Source
 
-https://github.com/nflverse/nflverse-data
+<https://github.com/nflverse/nflverse-data>
 
 Data can be regenerated/downloaded rather than versioned.
 

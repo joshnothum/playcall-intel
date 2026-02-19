@@ -13,6 +13,7 @@ requires-python = ">=3.11"
 dependencies = [
   "python-dotenv",       # Load environment variables from .env
   "pandas",
+  "streamlit"
 ]
 
 # Tell setuptools we are using the src/ layout

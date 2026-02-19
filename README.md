@@ -1,88 +1,176 @@
 # Playcall-Intel
 
-Contract-driven pipeline that converts raw nflverse play-by-play into
-validated, analytics-ready football features using a rules-first baseline
-and a local LLM for text enrichment.
+Contract-driven sports analytics pipeline that combines deterministic feature engineering with locally hosted LLM enrichment to produce reproducible, data-grounded NFL game reports.
 
 ---
 
-## What this project does
+## Quick Start
 
-- Builds a **stable, model-friendly Play schema**
-- Maps messy nflverse rows into a **deterministic baseline**
-- Uses a **local LLaMA model (Ollama)** only where text adds new meaning
-- Enforces a **strict JSON contract (Pydantic-validated)**
-- Produces a reproducible processed dataset slice for inspection
-
-The LLM is used as a **bounded enrichment step**, not as a source of truth.
-
----
-
-## Pipeline overview
-
-nflverse pbp CSV
-↓
-rules-first mapper (deterministic baseline)
-↓
-LLM normalization (play_text → structured labels)
-↓
-contract validation
-↓
-enriched Play objects
-↓
-processed sample + rejects file
-
-Batch runs:
-
-- continue through bad rows
-- capture failures for later inspection
-
----
-
-## One-command demo
-
-LLM_PROVIDER=ollama python -m playcall_intel.batch_normalize
-
----
-
-## Quickstart
-
-### 1) Create environment
+```bash
+git clone https://github.com/joshnothum/playcall-intel
+cd playcall-intel
 
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
 
-### 2) Install and start Ollama
-
+# start local model
 ollama pull llama3.1:8b
 ollama serve
 
-### 3) Add the raw data
+# run the app
+streamlit run src/playcall_intel/app.py
+```
 
-Expected path:
+Open the local URL → select a game → generate a report.
+
+---
+
+## What the demo shows
+
+- Select any NFL matchup from a structured game index
+- Generate a full **data-grounded markdown game report**
+- Deterministic box score and play counts
+- WPA-based highlight extraction
+- Local LLM recap built from validated structured data
+
+No external APIs. Fully reproducible.
+
+---
+
+## Why this project exists
+
+Most sports analytics workflows either:
+
+- rely only on structured data, or
+- use LLMs as unbounded text generators
+
+This project demonstrates a third approach:
+
+A **rules-first, contract-validated pipeline** where a local LLM performs
+strictly controlled semantic enrichment on top of a deterministic baseline.
+
+The model is a bounded component — not a source of truth.
+
+---
+
+## Core capabilities
+
+- Stable, model-friendly **Play schema**
+- Deterministic normalization from raw nflverse play-by-play
+- Strict **Pydantic JSON contract** for all LLM output
+- Batch processing with **reject capture**
+- Local LLM provider via **Ollama**
+- Interactive **Streamlit UI for game-level reports**
+- Reproducible CLI pipeline for offline runs
+
+---
+
+## System architecture
+
+```
+nflverse play-by-play
+        ↓
+rules-first normalization (deterministic baseline)
+        ↓
+LLM enrichment from play_text (contract-bounded)
+        ↓
+schema validation
+        ↓
+normalized plays
+        ↓
+game aggregation
+        ↓
+markdown report + AI recap
+```
+
+---
+
+## Design principles
+
+- Deterministic first, AI second
+- AI outputs are validated data — never free text
+- Strict schema at system boundaries
+- Model-agnostic LLM client (local or mock)
+- Reproducible batch artifacts
+- Raw data is never committed to Git
+
+---
+
+## Interactive UI
+
+The Streamlit app provides:
+
+- Team selector
+- Opponent selector
+- Game selector
+- One-click report generation
+
+The UI is powered by a precomputed **one-row-per-game index**, not ad-hoc filtering, ensuring fast and stable interaction.
+
+---
+
+## Batch normalization (CLI)
+
+For pipeline demonstration and artifact generation:
+
+```bash
+LLM_PROVIDER=ollama python -m playcall_intel.batch_normalize
+```
+
+Outputs:
+
+- `normalized_*.csv` → contract-validated plays
+- `rejects_*.csv` → rows that failed validation
+
+The batch run continues through bad rows and captures failures for inspection.
+
+---
+
+## Data
+
+Expected raw data path:
+
+```
 data/raw/play_by_play_2025.csv.gz
+```
 
-### 4) Run the demo batch
+Raw nflverse data is **not tracked by Git** and can be regenerated.
 
----
-
-## Output
-
-- **normalized_sample.csv** → contract-validated enriched plays
-- **rejects_sample.csv** → rows that failed validation
-
-Raw data is **not tracked by Git** and can be regenerated.
+See `data/README.md` for taxonomy, field design, and normalization rules.
 
 ---
 
+## Play text as a secondary data source
 
+Structured nflverse columns provide:
 
-## Result classification (first pass)
+- down
+- distance
+- yardline_100
+- baseline play type
+- yards gained
 
-A simple, rules-first `result` label provides a stable downstream signal.
+But they do not consistently capture:
 
-### v1 result categories
+- plain-language results
+- player involvement
+- contextual run/pass meaning
+- penalty enforcement details
+- edge cases with sparse flags
+
+The pipeline treats:
+
+- structured data → deterministic baseline
+- `play_text` → LLM enrichment input
+
+The model **adds meaning on top of the baseline — it never replaces it.**
+
+---
+
+## Result classification (rules-first)
+
+Initial stable result labels:
 
 - tackle
 - complete
@@ -96,85 +184,51 @@ A simple, rules-first `result` label provides a stable downstream signal.
 - no_play
 - other
 
-This is intentionally small and consistent across seasons.
+This small, consistent taxonomy provides a reliable downstream signal across seasons.
 
 ---
 
-## Play text as a secondary data source
+## Tech stack
 
-In addition to structured nflverse fields, the pipeline carries the raw
-play description (`desc`) as `play_text`.
-
-### Why this exists
-
-Structured columns are enough for:
-
-- down
-- distance
-- yardline_100
-- baseline play_type
-- yards_gained
-
-…but they do **not** capture the full football meaning of the play.
-
-The narrative is the only consistently human-readable source for:
-
-- plain-language result (tackle, interception, touchdown, etc.)
-- player involvement
-- run direction / pass context
-- penalty enforcement details
-- edge cases where flags are sparse or ambiguous
-
-### Design approach
-
-- Structured data = deterministic baseline
-- `play_text` = input for LLM enrichment
-- The model **adds meaning on top of the baseline — it never replaces it**
+- Python
+- pandas
+- Pydantic
+- Streamlit
+- Ollama (local LLaMA 3.1 8B)
 
 ---
 
-## Design principles
+## Project scope
 
-- Deterministic first, AI second
-- AI outputs are data, not text
-- Strict schema at system boundaries
-- Model-agnostic client (local or mock)
-- Reproducible batch artifact for demos
+### Implemented
 
----
+- Play schema and normalization pipeline
+- Rules-first result classification
+- Contract-validated LLM enrichment
+- Batch runner with rejects
+- WPA highlight extraction
+- Data-grounded AI recap
+- Game-level aggregation
+- Streamlit interactive UI
 
-## Current scope
+### Deferred
 
-Implemented:
-
-- Play schema
-- Rules-first mapper
-- LLM contract + prompt
-- Local Ollama client
-- Batch normalization runner
-- Rejects capture
-
-Deferred:
-
-- caching
-- expanded enrichment feature set
-- visualization layer
-- game-level reporting
+- Caching layer for batch runs
+- Expanded enrichment feature set
+- Additional visualization views
 
 ---
 
-## Summary
+## What this project demonstrates
 
-This project shows how to use an LLM to:
-
-- extract structure from inconsistent real-world text
-- operate inside a strict validation contract
-- behave as a controlled component in a data pipeline
-
-—not as a text generator.
+- LLM integration inside a **strict data contract**
+- Safe extraction of structure from inconsistent real-world text
+- Separation of deterministic logic and AI responsibility
+- Reproducible, local-first AI workflows
+- End-to-end analytics system design — not a notebook
 
 ---
 
-## Status
+## Project status
 
-Demo-ready.
+Portfolio project — stable demo build.
