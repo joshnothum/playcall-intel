@@ -32,7 +32,6 @@ enriched Play objects
 ↓
 processed sample + rejects file
 
-
 Batch runs:
 
 - continue through bad rows
@@ -44,7 +43,6 @@ Batch runs:
 
 LLM_PROVIDER=ollama python -m playcall_intel.batch_normalize
 
-
 ---
 
 ## Quickstart
@@ -54,7 +52,6 @@ LLM_PROVIDER=ollama python -m playcall_intel.batch_normalize
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
-
 
 ### 2) Install and start Ollama
 
@@ -66,9 +63,7 @@ ollama serve
 Expected path:
 data/raw/play_by_play_2025.csv.gz
 
-
 ### 4) Run the demo batch
-
 
 ---
 
@@ -81,51 +76,7 @@ Raw data is **not tracked by Git** and can be regenerated.
 
 ---
 
-# Data
 
-This project uses nflverse play-by-play data.
-
-## Source
-
-https://github.com/nflverse/nflverse-data
-
-The raw dataset is stored locally and not versioned.
-
----
-
-## Play type normalization
-
-The pipeline maps nflverse rows into a small, stable set of
-play-type categories derived from structured fields before any LLM parsing.
-
-### Core offensive plays
-
-- run
-- pass
-
-### QB clock / game-management plays
-
-- qb_kneel
-- qb_spike
-
-### Special teams
-
-- kickoff
-- punt
-- field_goal
-- extra_point
-- two_point_attempt
-
-### Administrative / non-plays
-
-- penalty
-- no_play
-
-### Fallback
-
-- other
-
----
 
 ## Result classification (first pass)
 

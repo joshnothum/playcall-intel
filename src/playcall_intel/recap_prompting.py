@@ -9,7 +9,7 @@ def build_game_recap_prompt_v1(bs: Any, highlights: list[str]) -> str:
         "rules": [
             "Use ONLY the facts in the stats and highlights below.",
             "Do NOT invent players, scores, records, or events not listed.",
-            "Keep each paragraph 2–4 sentences. Be excited, like it was the greatest game you ever saw.",
+            "Keep each paragraph 4-6 sentences. Be excited, like it was the greatest game you ever saw.",
         ],
         "stats": {
             "game_id": bs.game_id,

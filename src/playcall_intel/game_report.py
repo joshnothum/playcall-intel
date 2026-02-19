@@ -21,7 +21,9 @@ class BoxScore:
 
     # team-level quick stats
     home_off_plays: int
+    home_total_yards: int
     away_off_plays: int
+    away_total_yards: int
     home_pass: int
     home_run: int
     away_pass: int
@@ -119,6 +121,16 @@ def compute_box_score(game_id: str) -> BoxScore:
     home_to, home_sacks = team_misc(home_team)
     away_to, away_sacks = team_misc(away_team)
 
+    def team_total_yards(team: str) -> int:
+        t = off[off["posteam"] == team]
+        if "yards_gained" not in t.columns:
+            return 0
+        return int(t["yards_gained"].fillna(0).sum())
+
+    home_total_yards = team_total_yards(home_team)
+    away_total_yards = team_total_yards(away_team)
+
+
     return BoxScore(
         game_id=game_id,
         home_team=home_team,
@@ -135,6 +147,9 @@ def compute_box_score(game_id: str) -> BoxScore:
         away_turnovers=away_to,
         home_sacks=home_sacks,
         away_sacks=away_sacks,
+        home_total_yards=home_total_yards,
+        away_total_yards=away_total_yards,
+
     )
 
 
@@ -166,18 +181,50 @@ def make_brief_summary(bs: BoxScore) -> str:
     )
     return " ".join(lines)
 
+def top_wpa_plays_by_team(g: pd.DataFrame, team: str, n: int = 3) -> list[tuple[float, str]]:
+    """
+    Returns [(wpa, desc), ...] for the top N WPA plays credited to `posteam`.
+    Uses raw WPA (positive swing for that team’s offense).
+    """
+    if not {"wpa", "posteam", "desc"}.issubset(g.columns):
+        return []
+
+    t = g[(g["posteam"] == team)].dropna(subset=["wpa", "desc"]).copy()
+    if t.empty:
+        return []
+
+    top = t.sort_values("wpa", ascending=False).head(n)
+    return [(float(r["wpa"]), str(r["desc"])) for _, r in top.iterrows()]
+
+def _fmt_wpa_list(items: list[tuple[float, str]]) -> str:
+    if not items:
+        return "_No WPA highlights available._"
+    return "\n".join([f"- **{wpa:+.3f} WPA** — {desc}" for wpa, desc in items])
+
 
 def write_game_report(game_id: str) -> Path:
     # Load the full game play stream (for highlights) and compute the box score (source of truth)
     g = load_game_df(game_id)
     bs = compute_box_score(game_id)
 
-    # MVP highlights: first 8–12 non-empty play descriptions
-    highlights = (
-        g["desc"].dropna().astype(str).head(12).tolist()
-        if "desc" in g.columns
-        else []
-    )
+    # Top WPA plays per team (offense)
+    away_top_wpa = top_wpa_plays_by_team(g, bs.away_team, n=3)
+    home_top_wpa = top_wpa_plays_by_team(g, bs.home_team, n=3)
+
+    away_wpa_md = _fmt_wpa_list(away_top_wpa)
+    home_wpa_md = _fmt_wpa_list(home_top_wpa)
+
+    # High-signal highlights for the LLM recap (top |WPA| swings)
+    highlights: list[str] = []
+    if {"wpa", "desc"}.issubset(g.columns):
+        highlights = (
+            g.dropna(subset=["wpa", "desc"])
+            .assign(abs_wpa=lambda x: x["wpa"].abs())
+            .sort_values("abs_wpa", ascending=False)
+            .head(10)["desc"]
+            .astype(str)
+            .tolist()
+        )
 
     # Default recap (rules-only) in case the LLM call fails
     recap_text = make_brief_summary(bs)
@@ -202,11 +249,19 @@ def write_game_report(game_id: str) -> Path:
 ## Brief recap
 {recap_text}
 
-## Box score (quick)
-| Team | Score | Off plays | Pass | Run | Turnovers | Sacks |
-|---|---:|---:|---:|---:|---:|---:|
-| {bs.away_team} | {bs.away_score} | {bs.away_off_plays} | {bs.away_pass} | {bs.away_run} | {bs.away_turnovers} | {bs.away_sacks} |
-| {bs.home_team} | {bs.home_score} | {bs.home_off_plays} | {bs.home_pass} | {bs.home_run} | {bs.home_turnovers} | {bs.home_sacks} |
+## Box score
+| Team | Score | Off plays | Pass | Run | Total yards | Turnovers | Sacks |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| {bs.away_team} | {bs.away_score} | {bs.away_off_plays} | {bs.away_pass} | {bs.away_run} | {bs.away_total_yards} | {bs.away_turnovers} | {bs.away_sacks} |
+| {bs.home_team} | {bs.home_score} | {bs.home_off_plays} | {bs.home_pass} | {bs.home_run} | {bs.home_total_yards} | {bs.home_turnovers} | {bs.home_sacks} |
+
+## Top WPA plays (offense)
+
+### {bs.away_team} — top 3
+{away_wpa_md}
+
+### {bs.home_team} — top 3
+{home_wpa_md}
 """
     out_path.write_text(md, encoding="utf-8")
     return out_path

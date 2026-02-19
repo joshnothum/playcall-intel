@@ -83,6 +83,7 @@ appear in a consistent, human-readable form.
 - Structured fields remain the deterministic baseline.
 - `play_text` is the source input for any LLM-based enrichment.
 - The model adds meaning on top of the baseline; it does not replace it.
+
 ## Result classification (first pass)
 
 In addition to play_type, the pipeline assigns a simple `result` label as a
@@ -118,4 +119,3 @@ logic can rely on it.
   deferred to a later layer once the base pipeline is validated.
 - LLM-based parsing will eventually map ambiguous or text-only cases into
   this same set of categories.
-
