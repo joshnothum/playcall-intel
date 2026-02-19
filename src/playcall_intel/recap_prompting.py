@@ -19,6 +19,8 @@ def build_game_recap_prompt_v1(bs: Any, highlights: list[str]) -> str:
             "away_score": bs.away_score,
             "home_off_plays": bs.home_off_plays,
             "away_off_plays": bs.away_off_plays,
+            "home_off_yards": bs.home_total_yards,
+            "away_off_yards": bs.away_total_yards,
             "home_pass": bs.home_pass,
             "home_run": bs.home_run,
             "away_pass": bs.away_pass,

@@ -234,8 +234,9 @@ def write_game_report(game_id: str) -> Path:
         client = get_llm_client()
         recap = generate_game_recap_v1(bs, highlights, client)
         recap_text = f"{recap.paragraph_1}\n\n{recap.paragraph_2}"
-    except Exception:
+    except Exception as e:
         # Keep the report reliable — never fail the whole report for narrative generation
+        print(f"[recap] LLM unavailable → using rules summary: {type(e).__name__}: {e}")
         pass
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
