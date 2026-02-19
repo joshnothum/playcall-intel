@@ -1,9 +1,9 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-
+from playcall_intel.client_factory import get_llm_client
+from playcall_intel.recap_generate import generate_game_recap_v1
 import pandas as pd
 
 
@@ -168,8 +168,28 @@ def make_brief_summary(bs: BoxScore) -> str:
 
 
 def write_game_report(game_id: str) -> Path:
+    # Load the full game play stream (for highlights) and compute the box score (source of truth)
+    g = load_game_df(game_id)
     bs = compute_box_score(game_id)
-    summary = make_brief_summary(bs)
+
+    # MVP highlights: first 8–12 non-empty play descriptions
+    highlights = (
+        g["desc"].dropna().astype(str).head(12).tolist()
+        if "desc" in g.columns
+        else []
+    )
+
+    # Default recap (rules-only) in case the LLM call fails
+    recap_text = make_brief_summary(bs)
+
+    # Try LLM recap (2 paragraphs) using ONLY stats + highlights
+    try:
+        client = get_llm_client()
+        recap = generate_game_recap_v1(bs, highlights, client)
+        recap_text = f"{recap.paragraph_1}\n\n{recap.paragraph_2}"
+    except Exception:
+        # Keep the report reliable — never fail the whole report for narrative generation
+        pass
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUT_DIR / f"{game_id}.md"
@@ -180,7 +200,7 @@ def write_game_report(game_id: str) -> Path:
 **{bs.away_team} {bs.away_score} — {bs.home_team} {bs.home_score}**
 
 ## Brief recap
-{summary}
+{recap_text}
 
 ## Box score (quick)
 | Team | Score | Off plays | Pass | Run | Turnovers | Sacks |
